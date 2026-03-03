@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | Job Application Tracker</title>
+    <style>
+        :root {
+            --panel: #ffffff;
+            --text: #1f2933;
+            --muted: #6b7280;
+            --primary: #0f766e;
+            --border: #d7dde3;
+        }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+            color: var(--text);
+            background: linear-gradient(180deg, #eef5f7 0%, #f8fafc 100%);
+        }
+        .shell { max-width: 920px; margin: 0 auto; padding: 24px; }
+        .nav {
+            display: flex;
+            gap: 16px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+        }
+        .nav a {
+            text-decoration: none;
+            color: var(--muted);
+            font-weight: 600;
+        }
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+        }
+        h1 { margin-top: 0; }
+        .muted { color: var(--muted); }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            max-width: 460px;
+        }
+        input, button {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 11px;
+            font: inherit;
+        }
+        button {
+            border: none;
+            background: var(--primary);
+            color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .links { margin-top: 12px; }
+    </style>
+</head>
+<body>
+<div class="shell">
+    <nav class="nav">
+        <a href="/login">Login</a>
+        <a href="/register">Register</a>
+    </nav>
+
+    <section class="panel">
+        <h1>Create Account</h1>
+        <p class="muted">Create your private account with email and password.</p>
+        <p th:if="${message != null and !#strings.isEmpty(message)}" style="color:#b42318;" th:text="${message}">Registration failed.</p>
+
+        <form class="form-grid" method="post" action="/register">
+            <input type="email" name="email" placeholder="Email" autocomplete="username" required>
+            <input type="password" name="password" placeholder="Password (at least 6 chars)" autocomplete="new-password" required>
+            <button type="submit">Register</button>
+        </form>
+
+        <div class="links">
+            <a href="/login">Already have an account? Login</a>
+        </div>
+    </section>
+</div>
+</body>
+</html>

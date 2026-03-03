@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Applications | Job Application Tracker</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --panel: #ffffff;
+            --text: #1f2933;
+            --muted: #6b7280;
+            --primary: #0f766e;
+            --border: #d7dde3;
+            --danger: #b42318;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+            color: var(--text);
+            background: linear-gradient(180deg, #eef5f7 0%, #f8fafc 100%);
+        }
+        .shell { max-width: 1120px; margin: 0 auto; padding: 24px; }
+        .nav {
+            display: flex;
+            gap: 16px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+        }
+        .nav a {
+            text-decoration: none;
+            color: var(--muted);
+            font-weight: 600;
+        }
+        .nav a.active { color: var(--primary); }
+        .nav .spacer { margin-left: auto; }
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 16px;
+        }
+        h1, h2 { margin: 0 0 12px; }
+        .muted { color: var(--muted); }
+        .inline { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+        }
+        input, select, textarea, button {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 9px 10px;
+            font: inherit;
+            width: 100%;
+        }
+        button {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            width: auto;
+        }
+        button.secondary { background: #334155; }
+        button.danger { background: var(--danger); }
+        .btn-link {
+            display: inline-block;
+            background: #334155;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 14px;
+        }
+        .btn-link.danger { background: var(--danger); }
+        .message {
+            padding: 10px 12px;
+            border: 1px solid #c7e7e3;
+            background: #effcf9;
+            color: #115e59;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .empty {
+            padding: 20px;
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            color: var(--muted);
+            text-align: center;
+        }
+        .region-block {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        .region-block summary {
+            cursor: pointer;
+            padding: 10px 12px;
+            background: #f8fafc;
+            font-weight: 600;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            border-top: 1px solid var(--border);
+            text-align: left;
+            vertical-align: top;
+            font-size: 14px;
+        }
+        th { background: #f8fafc; }
+        .actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .small-note {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+<div class="shell">
+    <nav class="nav">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/applications" class="active">Applications</a>
+        <a href="/documents">Attachments</a>
+        <a href="/logout" class="spacer">Logout</a>
+    </nav>
+
+    <section class="panel">
+        <h1>Applications</h1>
+        <p class="muted">Search and filter on top, but always review results grouped by region.</p>
+    </section>
+
+    <section class="panel" th:if="${message != null and !#strings.isEmpty(message)}">
+        <div class="message" th:text="${message}">Application updated.</div>
+    </section>
+
+    <section class="panel">
+        <h2>Search & Filter</h2>
+        <form class="inline" method="get" action="/applications">
+            <input type="text" name="keyword" placeholder="Keyword (company/role/summary/country)" th:value="${query.keyword}">
+            <select name="status">
+                <option value="">All status</option>
+                <option th:each="status : ${statuses}"
+                        th:value="${status}"
+                        th:text="${status}"
+                        th:selected="${query.status == status}">Applied</option>
+            </select>
+            <button type="submit">Search</button>
+            <a class="btn-link" href="/applications">Reset</a>
+        </form>
+    </section>
+
+    <section class="panel" id="application-form">
+        <h2 th:if="${!editMode}">Add Application</h2>
+        <h2 th:if="${editMode}">Edit Application</h2>
+
+        <form th:if="${!editMode}" method="post" action="/applications/create" enctype="multipart/form-data">
+            <div class="grid">
+                <input id="create-company" type="text" name="company" placeholder="Company" th:value="${createForm.company}" required>
+                <input type="text" name="role" placeholder="Role" th:value="${createForm.role}" required>
+                <select id="create-region" name="region">
+                    <option th:each="region : ${regions}"
+                            th:value="${region}"
+                            th:text="${region}"
+                            th:selected="${createForm.region == region}">Other</option>
+                </select>
+                <select name="status">
+                    <option th:each="status : ${statuses}"
+                            th:value="${status}"
+                            th:text="${status}"
+                            th:selected="${createForm.status == status}">Applied</option>
+                </select>
+                <input type="date" name="appliedDate" th:value="${createForm.appliedDate}" required>
+                <input id="create-link" type="url" name="link" placeholder="Company or job link" th:value="${createForm.link}">
+                <input id="create-country" type="text" name="country" placeholder="Country (optional)" th:value="${createForm.country}">
+            </div>
+            <textarea id="create-companySummary" name="companySummary" rows="3" placeholder="Company summary (from Auto-fill or manual)" th:text="${createForm.companySummary}"></textarea>
+            <textarea name="notes" rows="3" placeholder="Interview notes / reminders" th:text="${createForm.notes}"></textarea>
+            <input id="create-attachments" type="file" name="attachments" multiple>
+            <div class="small-note">Optional: upload multiple attachments (CV, cover letter, portfolio).</div>
+            <div class="inline">
+                <button type="button" class="secondary" onclick="autoFillCompany('create')">Auto-fill Company Info</button>
+                <button type="submit">Create Application</button>
+            </div>
+            <div id="create-autofill-status" class="small-note"></div>
+        </form>
+
+        <form th:if="${editMode}" th:action="@{'/applications/' + ${editForm.id} + '/edit'}" method="post" enctype="multipart/form-data">
+            <div class="grid">
+                <input id="edit-company" type="text" name="company" placeholder="Company" th:value="${editForm.company}" required>
+                <input type="text" name="role" placeholder="Role" th:value="${editForm.role}" required>
+                <select id="edit-region" name="region">
+                    <option th:each="region : ${regions}"
+                            th:value="${region}"
+                            th:text="${region}"
+                            th:selected="${editForm.region == region}">Other</option>
+                </select>
+                <select name="status">
+                    <option th:each="status : ${statuses}"
+                            th:value="${status}"
+                            th:text="${status}"
+                            th:selected="${editForm.status == status}">Applied</option>
+                </select>
+                <input type="date" name="appliedDate" th:value="${editForm.appliedDate}" required>
+                <input id="edit-link" type="url" name="link" placeholder="Company or job link" th:value="${editForm.link}">
+                <input id="edit-country" type="text" name="country" placeholder="Country (optional)" th:value="${editForm.country}">
+            </div>
+            <textarea id="edit-companySummary" name="companySummary" rows="3" placeholder="Company summary (from Auto-fill or manual)" th:text="${editForm.companySummary}"></textarea>
+            <textarea name="notes" rows="3" placeholder="Interview notes / reminders" th:text="${editForm.notes}"></textarea>
+            <input id="edit-attachments" type="file" name="attachments" multiple>
+            <div class="small-note">Optional: upload more attachments while editing this application.</div>
+            <div class="inline">
+                <button type="button" class="secondary" onclick="autoFillCompany('edit')">Auto-fill Company Info</button>
+                <button type="submit">Save Changes</button>
+                <a class="btn-link" href="/applications">Cancel</a>
+            </div>
+            <div id="edit-autofill-status" class="small-note"></div>
+        </form>
+
+        <div th:if="${editMode}">
+            <h2 style="margin-top: 16px;">Current Attachments</h2>
+            <div th:if="${#lists.isEmpty(editDocuments)}" class="empty">
+                No attachments yet for this application.
+            </div>
+            <table th:if="${!#lists.isEmpty(editDocuments)}">
+                <thead>
+                <tr>
+                    <th>File Name</th>
+                    <th>Type</th>
+                    <th>Size (bytes)</th>
+                    <th>Uploaded At</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${editDocuments}">
+                    <td th:text="${item.originalFilename}">resume.pdf</td>
+                    <td th:text="${item.contentType}">application/pdf</td>
+                    <td th:text="${item.sizeBytes}">10240</td>
+                    <td th:text="${item.createdAt}">2026-03-03T12:00:00</td>
+                    <td>
+                        <div class="actions">
+                            <a class="btn-link" th:href="@{'/applications/' + ${editForm.id} + '/documents/' + ${item.id} + '/download'}">Download</a>
+                            <form th:action="@{'/applications/' + ${editForm.id} + '/documents/' + ${item.id} + '/delete'}" method="post">
+                                <button type="submit" class="danger">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Applications by Region</h2>
+        <div th:if="${#lists.isEmpty(applications)}" class="empty">
+            No applications found. Start by adding your first application.
+            <div class="inline" style="justify-content: center; margin-top: 10px;">
+                <a class="btn-link" href="/applications#application-form">Add Application</a>
+            </div>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(applications)}">
+            <details class="region-block" th:each="entry : ${regionGroups}" th:if="${!#lists.isEmpty(entry.value)}" open>
+                <summary>
+                    <span th:text="${entry.key}">UK</span>
+                    <span th:text="${' (' + #lists.size(entry.value) + ')'}">(0)</span>
+                </summary>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Company</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Applied Date</th>
+                        <th>Country</th>
+                        <th>Summary</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="item : ${entry.value}">
+                        <td th:text="${item.company}">Acme</td>
+                        <td th:text="${item.role}">Backend Engineer</td>
+                        <td th:text="${item.status}">Applied</td>
+                        <td th:text="${item.appliedDate}">2026-03-02</td>
+                        <td th:text="${#strings.isEmpty(item.country) ? 'N/A' : item.country}">N/A</td>
+                        <td th:text="${#strings.isEmpty(item.companySummary) ? 'N/A' : item.companySummary}">N/A</td>
+                        <td>
+                            <div class="actions">
+                                <a class="btn-link" th:href="@{'/applications/' + ${item.id}}">View</a>
+                                <a class="btn-link" th:href="@{'/applications/' + ${item.id} + '/edit'}">Edit</a>
+                                <form th:action="@{'/applications/' + ${item.id} + '/delete'}" method="post">
+                                    <button type="submit" class="danger">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </details>
+        </div>
+    </section>
+</div>
+
+<script>
+    async function autoFillCompany(prefix) {
+        const companyInput = document.getElementById(prefix + "-company");
+        const statusNode = document.getElementById(prefix + "-autofill-status");
+        const linkInput = document.getElementById(prefix + "-link");
+        const countryInput = document.getElementById(prefix + "-country");
+        const summaryInput = document.getElementById(prefix + "-companySummary");
+        const regionInput = document.getElementById(prefix + "-region");
+
+        const company = companyInput ? companyInput.value.trim() : "";
+        if (!company) {
+            statusNode.textContent = "Enter company name first.";
+            return;
+        }
+
+        statusNode.textContent = "Auto-filling...";
+        try {
+            const response = await fetch("/applications/autofill?company=" + encodeURIComponent(company));
+            const body = await response.json();
+            const data = body && body.data ? body.data : null;
+
+            if (!data) {
+                statusNode.textContent = "Auto-fill unavailable. Summary/Country set to N/A.";
+                if (summaryInput && !summaryInput.value) { summaryInput.value = "N/A"; }
+                if (countryInput && !countryInput.value) { countryInput.value = "N/A"; }
+                return;
+            }
+
+            if (summaryInput) { summaryInput.value = data.summary || "N/A"; }
+            if (countryInput) { countryInput.value = data.country || "N/A"; }
+            if (linkInput && (!linkInput.value || linkInput.value === "N/A") && data.website && data.website !== "N/A") {
+                linkInput.value = data.website;
+            }
+            if (regionInput && data.suggestedRegion) {
+                const hasOption = Array.from(regionInput.options).some(opt => opt.value === data.suggestedRegion);
+                if (hasOption) {
+                    regionInput.value = data.suggestedRegion;
+                }
+            }
+            statusNode.textContent = "Auto-fill done. Suggested region: " + (data.suggestedRegion || "Other");
+        } catch (error) {
+            if (summaryInput && !summaryInput.value) { summaryInput.value = "N/A"; }
+            if (countryInput && !countryInput.value) { countryInput.value = "N/A"; }
+            statusNode.textContent = "Auto-fill failed. Fallback applied (N/A).";
+        }
+    }
+</script>
+</body>
+</html>

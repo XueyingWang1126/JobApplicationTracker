@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Job Application Tracker</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --panel: #ffffff;
+            --text: #1f2933;
+            --muted: #6b7280;
+            --primary: #0f766e;
+            --border: #d7dde3;
+        }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+            color: var(--text);
+            background: radial-gradient(circle at 0 0, #dff8f5 0%, #f8fafc 45%);
+        }
+        .shell { max-width: 1120px; margin: 0 auto; padding: 24px; }
+        .nav {
+            display: flex;
+            gap: 16px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+        }
+        .nav a {
+            text-decoration: none;
+            color: var(--muted);
+            font-weight: 600;
+        }
+        .nav a.active { color: var(--primary); }
+        .nav .spacer { margin-left: auto; }
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 16px;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .btn-link {
+            display: inline-block;
+            background: var(--primary);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            padding: 9px 12px;
+            font-weight: 600;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+            font-size: 14px;
+        }
+        th { background: #f8fafc; }
+        .list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .list li {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .list a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .muted { color: var(--muted); font-size: 13px; }
+        .empty {
+            color: var(--muted);
+            padding: 12px;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="shell">
+    <nav class="nav">
+        <a href="/dashboard" class="active">Dashboard</a>
+        <a href="/applications">Applications</a>
+        <a href="/documents">Attachments</a>
+        <a href="/logout" class="spacer">Logout</a>
+    </nav>
+
+    <section class="panel">
+        <h1>Application Dashboard</h1>
+        <p class="muted">This page is summary-only. Create and manage records in Applications.</p>
+    </section>
+
+    <section class="panel" th:if="${totalApplications == 0}">
+        <div class="empty">
+            No applications yet. Add your first application to start tracking your progress.
+            <div class="actions">
+                <a class="btn-link" href="/applications#application-form">Add Application</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Region x Status</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>Region</th>
+                <th th:each="status : ${statuses}" th:text="${status}">Applied</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="row : ${regionStatusRows}">
+                <td th:text="${row.region}">UK</td>
+                <td th:each="count : ${row.counts}" th:text="${count}">0</td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="panel">
+        <h2>Recent Added</h2>
+        <div th:if="${#lists.isEmpty(recentAdded)}" class="empty">No records yet.</div>
+        <ul th:if="${!#lists.isEmpty(recentAdded)}" class="list">
+            <li th:each="item : ${recentAdded}">
+                <a th:href="@{'/applications/' + ${item.id}}" th:text="${item.company + ' / ' + item.role}">Acme / Backend</a>
+                <div class="muted" th:text="${item.region + ' | ' + item.status + ' | created ' + item.createdAt}">UK | Applied | created</div>
+            </li>
+        </ul>
+    </section>
+</div>
+</body>
+</html>

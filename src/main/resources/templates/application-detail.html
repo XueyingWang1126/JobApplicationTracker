@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Detail | Job Application Tracker</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --panel: #ffffff;
+            --text: #1f2933;
+            --muted: #6b7280;
+            --primary: #0f766e;
+            --border: #d7dde3;
+            --danger: #b42318;
+        }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+            color: var(--text);
+            background: linear-gradient(180deg, #eef5f7 0%, #f8fafc 100%);
+        }
+        .shell { max-width: 1120px; margin: 0 auto; padding: 24px; }
+        .nav {
+            display: flex;
+            gap: 16px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+        }
+        .nav a {
+            text-decoration: none;
+            color: var(--muted);
+            font-weight: 600;
+        }
+        .nav a.active { color: var(--primary); }
+        .nav .spacer { margin-left: auto; }
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 16px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+        }
+        .label { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+        .value { font-weight: 600; }
+        .message {
+            padding: 10px 12px;
+            border: 1px solid #c7e7e3;
+            background: #effcf9;
+            color: #115e59;
+            border-radius: 8px;
+        }
+        form.inline { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        input, button {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 9px 10px;
+            font: inherit;
+        }
+        button {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        button.danger { background: var(--danger); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+            font-size: 14px;
+        }
+        th { background: #f8fafc; }
+        .empty {
+            padding: 20px;
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            color: var(--muted);
+            text-align: center;
+        }
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .btn-link {
+            display: inline-block;
+            background: #334155;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<div class="shell">
+    <nav class="nav">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/applications" class="active">Applications</a>
+        <a href="/documents">Attachments</a>
+        <a href="/logout" class="spacer">Logout</a>
+    </nav>
+
+    <section class="panel">
+        <h1 th:text="${appDetail.company + ' / ' + appDetail.role}">Acme / Backend Engineer</h1>
+        <div class="actions" style="margin-top: 10px;">
+            <a class="btn-link" href="/applications">Back to Applications</a>
+            <a class="btn-link" th:href="@{'/applications/' + ${appDetail.id} + '/edit'}">Edit Application</a>
+        </div>
+    </section>
+
+    <section class="panel" th:if="${message != null and !#strings.isEmpty(message)}">
+        <div class="message" th:text="${message}">Attachment uploaded.</div>
+    </section>
+
+    <section class="panel">
+        <h2>Overview</h2>
+        <div class="grid">
+            <div>
+                <div class="label">Region</div>
+                <div class="value" th:text="${appDetail.region}">Other</div>
+            </div>
+            <div>
+                <div class="label">Status</div>
+                <div class="value" th:text="${appDetail.status}">Applied</div>
+            </div>
+            <div>
+                <div class="label">Applied Date</div>
+                <div class="value" th:text="${appDetail.appliedDate}">2026-03-03</div>
+            </div>
+            <div>
+                <div class="label">Country</div>
+                <div class="value" th:text="${#strings.isEmpty(appDetail.country) ? 'N/A' : appDetail.country}">N/A</div>
+            </div>
+            <div>
+                <div class="label">Updated</div>
+                <div class="value" th:text="${appDetail.updatedAt}">2026-03-03T10:00:00</div>
+            </div>
+            <div>
+                <div class="label">Link</div>
+                <div class="value">
+                    <a th:if="${appDetail.link != null and !#strings.isEmpty(appDetail.link)}"
+                       th:href="${appDetail.link}" target="_blank" rel="noopener"
+                       th:text="${appDetail.link}">Open</a>
+                    <span th:if="${appDetail.link == null or #strings.isEmpty(appDetail.link)}">N/A</span>
+                </div>
+            </div>
+        </div>
+        <div style="margin-top: 12px;">
+            <div class="label">Company Summary</div>
+            <div th:text="${#strings.isEmpty(appDetail.companySummary) ? 'N/A' : appDetail.companySummary}">N/A</div>
+        </div>
+        <div style="margin-top: 12px;">
+            <div class="label">Notes</div>
+            <div th:text="${#strings.isEmpty(appDetail.notes) ? 'N/A' : appDetail.notes}">N/A</div>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Attachments</h2>
+        <p class="label">Upload new files from the Applications edit form.</p>
+        <div th:if="${#lists.isEmpty(documents)}" class="empty">No attachments yet.</div>
+        <table th:if="${!#lists.isEmpty(documents)}">
+            <thead>
+            <tr>
+                <th>File Name</th>
+                <th>Type</th>
+                <th>Size (bytes)</th>
+                <th>Uploaded At</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${documents}">
+                <td th:text="${item.originalFilename}">resume.pdf</td>
+                <td th:text="${item.contentType}">application/pdf</td>
+                <td th:text="${item.sizeBytes}">40960</td>
+                <td th:text="${item.createdAt}">2026-03-03T09:00:00</td>
+                <td>
+                    <div class="actions">
+                        <a class="btn-link" th:href="@{'/applications/' + ${appDetail.id} + '/documents/' + ${item.id} + '/download'}">Download</a>
+                        <form th:action="@{'/applications/' + ${appDetail.id} + '/documents/' + ${item.id} + '/delete'}" method="post">
+                            <button type="submit" class="danger">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+</div>
+</body>
+</html>

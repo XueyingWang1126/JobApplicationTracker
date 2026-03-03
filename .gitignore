@@ -1,0 +1,22 @@
+# Build outputs
+target/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Runtime logs and local traces
+*.log
+*.err
+*.out
+*.dmp
+*.cookie
+
+# IDE/workspace artifacts
+.idea/
+.vscode/
+*.iml
+
+# OS artifacts
+.DS_Store
