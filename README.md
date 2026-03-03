@@ -1,12 +1,30 @@
 # job-application-tracker
 
-`job-application-tracker` 是一个基于我个人求职状态下的痛点所开发的可直接交付的求职管理小产品：帮助求职者集中管理投递流程、状态与每个岗位针对性简历与cover letter等附件。
+## Project Overview
 
-核心用户旅程：
+`job-application-tracker` is a productized personal project built around a real job-search pain point: keeping applications, status updates, notes, and role-specific attachments organized in one place.
+
+Instead of a demo-only CRUD app, this repository is structured as a small deliverable product for portfolio review:
+- account-based usage (register/login)
+- dashboard summary for quick progress tracking
+- full application management workflow
+- attachment storage integration for CV/cover-letter variants
+
+Core user journey:
 `register -> login -> dashboard -> CRUD applications -> upload attachments`
+
+## Features
+
+- Email registration and login
+- Dashboard summary (`region x status`) plus recent entries
+- Application CRUD (company, role, status, region, applied date, link, notes)
+- Attachment upload/download/delete linked to an application
+- Company auto-fill helper (summary/website/country suggestion)
+- Per-user data isolation (each user sees only their own records)
 
 ## Tech Stack
 
+- Java 17
 - Spring Boot
 - Thymeleaf
 - Apache Shiro
@@ -14,123 +32,171 @@
 - PostgreSQL
 - MinIO
 - Docker Compose
+- Maven
 
-## Windows Quick Start (Recommended)
+## Architecture (High-Level)
 
-1. 复制环境变量模板：
+- `Controller` layer: request handling + page model assembly
+- `Service` layer: business rules, ownership checks, storage orchestration
+- `Mapper` layer: MyBatis-Plus persistence access
+- `Entity/DTO/VO`: data contracts between DB, services, and views
+- `Templates`: server-rendered UI with Thymeleaf
+
+Runtime services:
+- Web app: `http://localhost:8080`
+- PostgreSQL: `localhost:55432`
+- MinIO API: `localhost:9000`
+- MinIO Console: `http://localhost:9001`
+
+## Getting Started
+
+### Prerequisites
+
+- Windows + PowerShell
+- Java 17
+- Maven 3.8+
+- Docker Desktop (running)
+
+### Setup
 
 ```powershell
-Copy-Item .env.example .env
+Copy-Item .env.example .env -Force
 ```
 
-2. 编辑 `.env`，把占位符（`change_me_*`）替换成你自己的值。
+Update `.env` with your own credentials before first run.
 
-3. 一键启动（Docker + Spring Boot）：
+## Run Locally (Docker + run.ps1)
+
+One-command startup:
 
 ```powershell
+Copy-Item .env.example .env -Force
 .\run.ps1
 ```
 
-4. 访问：
-- Login: `http://localhost:8080/login`
+What `run.ps1` does:
+- loads `.env`
+- validates required environment variables
+- starts Docker services (`postgres`, `minio`, `minio-init`)
+- waits for dependencies to be ready
+- starts Spring Boot
+
+Default local endpoints:
+- Web Login: `http://localhost:8080/login`
 - Dashboard: `http://localhost:8080/dashboard`
 - Applications: `http://localhost:8080/applications`
 - Attachments: `http://localhost:8080/documents`
+- PostgreSQL: `localhost:55432`
+- MinIO API: `localhost:9000`
 - MinIO Console: `http://localhost:9001`
-
-## Manual Start (Alternative)
-
-```powershell
-Copy-Item .env.example .env
-docker compose up -d
-mvn -DskipTests spring-boot:run
-```
 
 ## Environment Variables
 
-复制 `.env.example` 为 `.env` 后，按需填写：
+Template file: `.env.example`  
+Local file: `.env` (do not commit)
 
-| 字段 | 用途 |
+| Variable | Purpose |
 | --- | --- |
-| `APP_PORT` | Spring Boot HTTP 端口（默认 8080） |
-| `DB_HOST` | PostgreSQL 主机地址 |
-| `DB_PORT` | PostgreSQL 端口（Compose 默认映射 55432） |
-| `DB_NAME` | 应用数据库名 |
-| `DB_USER` | 数据库用户名 |
-| `DB_PASSWORD` | 数据库密码（必须自定义，不能是占位符） |
-| `MINIO_ENABLED` | 是否启用 MinIO（`true/false`） |
-| `MINIO_ENDPOINT` | MinIO 服务地址 |
-| `MINIO_ACCESS_KEY` | MinIO 访问账号（必须自定义） |
-| `MINIO_SECRET_KEY` | MinIO 访问密码（必须自定义） |
-| `MINIO_BUCKET` | 附件桶名称 |
+| `APP_PORT` | Spring Boot HTTP port (default `8080`) |
+| `DB_HOST` | PostgreSQL host |
+| `DB_PORT` | PostgreSQL port (default `55432`) |
+| `DB_NAME` | Database name |
+| `DB_USER` | Database username |
+| `DB_PASSWORD` | Database password |
+| `MINIO_ENABLED` | Enable/disable MinIO integration (`true`/`false`) |
+| `MINIO_ENDPOINT` | MinIO endpoint (default `http://localhost:9000`) |
+| `MINIO_ACCESS_KEY` | MinIO access key |
+| `MINIO_SECRET_KEY` | MinIO secret key |
+| `MINIO_BUCKET` | MinIO bucket name |
 
-安全约束：
-- 不要提交 `.env`
-- 只提交 `.env.example`
-- 所有敏感值必须通过环境变量注入，仓库内不硬编码真实凭证
+Important:
+- Commit `.env.example`
+- Never commit `.env`
+- Never hardcode real credentials in source files
 
-## Acceptance Checklist (Manual)
+## Testing
 
-1. 打开 `/register`，注册一个新账号
-2. 打开 `/login`，使用新账号登录
-3. 打开 `/dashboard`，看到概览（summary + recent）
-4. 打开 `/applications`，完成应用记录 CRUD
-5. 在创建/编辑应用时上传附件
-6. 打开 `/documents`，确认附件总览可查看/下载/删除
-7. 登出后访问 `/dashboard` 或 `/applications`，应重定向到 `/login`
-
-## Automated Test
+Run test suite:
 
 ```powershell
 mvn "-Djava.awt.headless=true" clean test
 ```
 
+If you only need standard unit/integration execution:
+
+```powershell
+mvn test
+```
+
 ## Troubleshooting
 
-### 8080 端口被占用
+### 1) Port 8080 already in use
 
-- 检查占用：
+Check:
 
 ```powershell
 netstat -ano | Select-String ':8080'
 ```
 
-- 改端口：在 `.env` 中设置 `APP_PORT=8081`（或其他可用端口），重新执行 `.\run.ps1`。
+Fix:
+- change `APP_PORT` in `.env` (for example `8081`)
+- rerun `.\run.ps1`
 
-### Docker 未启动
+### 2) Docker port conflicts (`55432`, `9000`, `9001`)
 
-- 快速判断：
-
-```powershell
-docker info
-```
-
-- 如果命令报错或无法连接 daemon，请先启动 Docker Desktop 再重试。
-
-### MinIO 控制台地址
-
-- 控制台：`http://localhost:9001`
-- 账号密码：使用 `.env` 中的 `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY`
-
-## Naming Consistency
-
-公开发布前，建议仓库目录名统一为 `job-application-tracker`。
-
-如果本地目录名仍不是 `job-application-tracker`（例如 `JobApplication Tracker` 或历史旧名称），可在 Windows PowerShell 安全改名：
+Check:
 
 ```powershell
-Set-Location ..
-$oldName = "JobApplication Tracker"   # 改成你的当前目录名
-Rename-Item $oldName "job-application-tracker"
-Set-Location .\job-application-tracker
+netstat -ano | Select-String ':55432|:9000|:9001'
 ```
 
-说明：
-- 改名前先关闭占用该目录的终端/IDE
-- 改名只影响本地目录名，不影响 Git 历史
+Fix options:
+- stop conflicting local services
+- or change published ports in `docker-compose.yml` and align `.env` / app config
 
-## Security Audit
+### 3) Windows permission / script execution issues
 
-完整安全审计与可复现扫描命令见：
-- `docs/SECURITY_AUDIT.md`
-- `docs/CODE_QUALITY_AUDIT.md`
+Symptoms:
+- `run.ps1` blocked by execution policy
+- Docker command access denied
+
+Fix:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+```
+
+Then rerun:
+
+```powershell
+.\run.ps1
+```
+
+Also ensure Docker Desktop is started and healthy (`docker info`).
+
+## Security Notes
+
+### Why MD5 is not recommended
+
+MD5 is considered cryptographically broken for password storage (fast hash, vulnerable to brute-force/rainbow-table style attacks).
+
+### Current project approach
+
+- New passwords are stored with BCrypt in `UserServiceImpl`
+- A legacy MD5+salt verification branch is still present only for backward compatibility/migration safety
+
+### Planned hardening path
+
+- Remove MD5 fallback after legacy data migration window
+- Add password policy and optional reset flow
+- Add stricter upload validation (type/size scanning strategy)
+- Add CI secret scanning in pull-request pipeline
+
+## Screenshots
+
+Add portfolio screenshots here:
+
+- `docs/screenshots/login.png` (placeholder)
+- `docs/screenshots/dashboard.png` (placeholder)
+- `docs/screenshots/applications.png` (placeholder)
+- `docs/screenshots/documents.png` (placeholder)
